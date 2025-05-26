@@ -8,20 +8,21 @@ import pandas as pd
 import joblib
 import numpy as np
 from datetime import date, timedelta
+from sklearn.linear_model import LinearRegression
 
 # --- 1. Load Data & Model ---
 try:
     # Load main cleaned dataset
     cleaned_df_path = 'data/cleaned_sales_data.csv'
     cleaned_df = pd.read_csv(cleaned_df_path)
-    cleaned_df['Order Date'] = pd.to_datetime(cleaned_df['Order Date'])
-    cleaned_df['Ship Date'] = pd.to_datetime(cleaned_df['Ship Date'])
+    cleaned_df['Order_Date'] = pd.to_datetime(cleaned_df['Order_Date'])
+    cleaned_df['Ship_Date'] = pd.to_datetime(cleaned_df['Ship_Date'])
     print("Cleaned data loaded successfully.")
 
     # Load feature-engineered dataset
     feature_engineered_df_path = 'data/feature_engineered_sales_data.csv'
     # This data has 'Order Date' as index and includes 'Sales' and exogenous features
-    feature_engineered_df = pd.read_csv(feature_engineered_df_path, index_col='Order Date', parse_dates=True)
+    feature_engineered_df = pd.read_csv(feature_engineered_df_path, index_col='Order_Date', parse_dates=True)
     # Resample to daily to match model training if necessary (assuming model was on daily)
     daily_sales_for_model = feature_engineered_df['Sales'].resample('D').sum().fillna(0)
     print("Feature-engineered data loaded and resampled successfully.")
@@ -36,8 +37,8 @@ except FileNotFoundError as e:
     print(f"Error loading data or model: {e}")
     # Create dummy dataframes and model for dashboard structure to work
     cleaned_df = pd.DataFrame({
-        'Order Date': pd.to_datetime(['2020-01-01', '2020-01-02']),
-        'Ship Date': pd.to_datetime(['2020-01-02', '2020-01-03']),
+        'Order_Date': pd.to_datetime(['2020-01-01', '2020-01-02']),
+        'Ship_Date': pd.to_datetime(['2020-01-02', '2020-01-03']),
         'Category': ['Office Supplies', 'Technology'],
         'Region': ['East', 'West'],
         'Sales': [100, 200]
@@ -109,10 +110,10 @@ app.layout = html.Div(children=[
             html.Label("Date Range:"),
             dcc.DatePickerRange(
                 id='date-picker-range',
-                min_date_allowed=cleaned_df['Order Date'].min().date(),
-                max_date_allowed=cleaned_df['Order Date'].max().date(),
-                start_date=(cleaned_df['Order Date'].max() - timedelta(days=365*2)).date(), # Default to last 2 years
-                end_date=cleaned_df['Order Date'].max().date(),
+                min_date_allowed=cleaned_df['Order_Date'].min().date(),
+                max_date_allowed=cleaned_df['Order_Date'].max().date(),
+                start_date=(cleaned_df['Order_Date'].max() - timedelta(days=365*2)).date(), # Default to last 2 years
+                end_date=cleaned_df['Order_Date'].max().date(),
                 display_format='YYYY-MM-DD'
             )
         ], style={'width': '40%', 'display': 'inline-block', 'padding': '10px'}),
@@ -177,8 +178,8 @@ def update_graphs(start_date, end_date, selected_categories, selected_regions):
     filtered_cleaned_df = cleaned_df.copy()
     if start_date and end_date:
         filtered_cleaned_df = filtered_cleaned_df[
-            (filtered_cleaned_df['Order Date'] >= pd.to_datetime(start_date)) &
-            (filtered_cleaned_df['Order Date'] <= pd.to_datetime(end_date))
+            (filtered_cleaned_df['Order_Date'] >= pd.to_datetime(start_date)) &
+            (filtered_cleaned_df['Order_Date'] <= pd.to_datetime(end_date))
         ]
     
     if selected_categories: # If not None or empty
@@ -188,8 +189,8 @@ def update_graphs(start_date, end_date, selected_categories, selected_regions):
         filtered_cleaned_df = filtered_cleaned_df[filtered_cleaned_df['Region'].isin(selected_regions)]
 
     # Graph 1: Overall Sales Trend (from cleaned_df, resampled daily)
-    sales_trend_data = filtered_cleaned_df.set_index('Order Date')['Sales'].resample('D').sum().reset_index()
-    fig_sales_trend = px.line(sales_trend_data, x='Order Date', y='Sales', title='Overall Sales Trend')
+    sales_trend_data = filtered_cleaned_df.set_index('Order_Date')['Sales'].resample('D').sum().reset_index()
+    fig_sales_trend = px.line(sales_trend_data, x='Order_Date', y='Sales', title='Overall Sales Trend')
 
     # Graph 2: Actual vs. Predicted Sales (from predictions_df)
     # This graph only responds to the date picker for its x-axis range
