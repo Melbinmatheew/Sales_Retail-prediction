@@ -1,0 +1,10 @@
+dash
+joblib
+matplotlib
+numpy
+pandas
+pmdarima
+plotly
+scikit-learn
+seaborn
+statsmodels
